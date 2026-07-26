@@ -145,8 +145,12 @@ public sealed class MainWindow : Window
         _shell.Padding = new Thickness(16);
         _shell.MouseLeftButtonDown += (_, e) =>
         {
-            if (!_settings.LockPosition && e.ButtonState == MouseButtonState.Pressed)
+            if (!_settings.LockPosition &&
+                e.OriginalSource == _shell &&
+                e.ButtonState == MouseButtonState.Pressed)
+            {
                 DragMove();
+            }
         };
 
         var root = new StackPanel();
@@ -196,6 +200,7 @@ public sealed class MainWindow : Window
         root.Children.Add(header);
 
         _track.FontSize = 19;
+        _track.Background = System.Windows.Media.Brushes.Transparent;
         _track.FontWeight = FontWeights.SemiBold;
         _track.TextAlignment = TextAlignment.Center;
         _track.TextWrapping = TextWrapping.Wrap;
@@ -205,6 +210,7 @@ public sealed class MainWindow : Window
         root.Children.Add(_track);
 
         _tags.FontSize = 12;
+        _tags.Background = System.Windows.Media.Brushes.Transparent;
         _tags.TextAlignment = TextAlignment.Center;
         _tags.TextWrapping = TextWrapping.Wrap;
         _tags.MaxHeight = 38;
@@ -218,7 +224,7 @@ public sealed class MainWindow : Window
         _progress.Minimum = 0;
         _progress.Maximum = 1;
         _progress.Cursor = System.Windows.Input.Cursors.Hand;
-        _progress.ToolTip = "Click to copy artist and title";
+        _progress.ToolTip = "Click to copy song name";
         _progress.MouseLeftButtonUp += (_, _) => CopyCurrent();
         root.Children.Add(_progress);
 
@@ -229,8 +235,25 @@ public sealed class MainWindow : Window
 
         ConfigureExpander(_lastExpander, _lastList, "LAST");
         ConfigureExpander(_nextExpander, _nextList, "NEXT");
-        _lastExpander.Expanded += (_, _) => { if (_nextExpander.IsExpanded) _nextExpander.IsExpanded = false; };
-        _nextExpander.Expanded += (_, _) => { if (_lastExpander.IsExpanded) _lastExpander.IsExpanded = false; };
+        _lastExpander.Expanded += (_, _) =>
+        {
+            if (_nextExpander.IsExpanded)
+                _nextExpander.IsExpanded = false;
+
+            RefreshLists();
+        };
+
+        _lastExpander.Collapsed += (_, _) => RefreshLists();
+
+        _nextExpander.Expanded += (_, _) =>
+        {
+            if (_lastExpander.IsExpanded)
+                _lastExpander.IsExpanded = false;
+
+            RefreshLists();
+        };
+
+        _nextExpander.Collapsed += (_, _) => RefreshLists();
         root.Children.Add(_lastExpander);
         root.Children.Add(_nextExpander);
 
@@ -271,7 +294,12 @@ public sealed class MainWindow : Window
     {
         expander.Margin = new Thickness(0, 2, 0, 0);
         expander.Content = list;
-        expander.Header = new TextBlock { Text = $"{label}   —", TextTrimming = TextTrimming.CharacterEllipsis, Width = 365 };
+        expander.Header = new TextBlock
+        {
+            Text = label,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Width = 365
+        };
     }
 
     private ContextMenu BuildMenu()
@@ -312,7 +340,7 @@ public sealed class MainWindow : Window
         menu.Items.Add(theme);
 
         menu.Items.Add(new Separator());
-        var openSite = new MenuItem { Header = "Open r-a-d.io" };
+        var openSite = new MenuItem { Header = "Open r/a/dio" };
         openSite.Click += (_, _) => OpenUrl("https://r-a-d.io/");
         menu.Items.Add(openSite);
 
@@ -380,10 +408,16 @@ public sealed class MainWindow : Window
 
     private void SetExpander(Expander expander, StackPanel panel, string label, IReadOnlyList<TrackItem> items)
     {
-        var first = items.FirstOrDefault()?.Title ?? "—";
+        var firstItem = items.FirstOrDefault();
+        var first = firstItem is null
+            ? "—"
+            : $"{firstItem.Title}{(firstItem.IsRequest ? " [REQUEST]" : string.Empty)}";
         if (expander.Header is TextBlock header)
         {
-            header.Text = $"{label}   {first}";
+            header.Text = expander.IsExpanded
+                ? label
+                : $"{label}   {first}";
+
             header.ToolTip = first;
         }
         panel.Children.Clear();
@@ -392,7 +426,7 @@ public sealed class MainWindow : Window
             var item = items[i];
             var row = new TextBlock
             {
-                Text = $"{i + 1}.  {item.Title}{(item.IsRequest ? "   REQUEST" : string.Empty)}",
+                Text = $"{i + 1}.  {item.Title}{(item.IsRequest ? " [REQUEST]" : string.Empty)}",
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Margin = new Thickness(17, 4, 4, 4),
                 Cursor = System.Windows.Input.Cursors.Hand,
@@ -509,8 +543,8 @@ public sealed class MainWindow : Window
     {
         System.Windows.Clipboard.SetText(text);
         var old = _connection.Text;
-        _connection.Text = "✓ Copied";
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _connection.Text = "✓ Copied to clipboard";
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         timer.Tick += (_, _) => { timer.Stop(); _connection.Text = old; };
         timer.Start();
     }
@@ -518,8 +552,20 @@ public sealed class MainWindow : Window
     private void SearchTags()
     {
         if (string.IsNullOrWhiteSpace(_current?.Tags)) return;
+
         var query = _current.Tags.Split(',', 2)[0].Trim();
         OpenUrl("https://www.google.com/search?q=" + Uri.EscapeDataString(query));
+
+        var old = _connection.Text;
+        _connection.Text = "✓ Searching Google";
+
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            _connection.Text = old;
+        };
+        timer.Start();
     }
 
     private static void OpenUrl(string url)
@@ -556,6 +602,10 @@ public sealed class MainWindow : Window
         _connection.Foreground = new SolidColorBrush(muted);
         _tags.Foreground = new SolidColorBrush(muted);
         _time.Foreground = new SolidColorBrush(muted);
+
+        _lastExpander.Foreground = new SolidColorBrush(foreground);
+        _nextExpander.Foreground = new SolidColorBrush(foreground);
+
         _progress.Foreground = new SolidColorBrush(accent);
         _progress.Background = new SolidColorBrush(panel);
     }
