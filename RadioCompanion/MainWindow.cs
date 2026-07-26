@@ -494,7 +494,7 @@ root.Children.Add(controls);
 
     private void CopyText(string text)
     {
-        Clipboard.SetText(text);
+        System.Windows.Clipboard.SetText(text);
         var old = _connection.Text;
         _connection.Text = "✓ Copied";
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -516,23 +516,23 @@ root.Children.Add(controls);
 
     private void ApplyTheme(string name)
     {
-        Color background, panel, foreground, muted, accent, border;
+        System.Windows.Media.Color background, panel, foreground, muted, accent, border;
         switch (name)
         {
             case "Light":
-                background = Color.FromRgb(247, 247, 247); panel = Color.FromRgb(234, 234, 234);
-                foreground = Color.FromRgb(28, 28, 28); muted = Color.FromRgb(100, 100, 100);
-                accent = Color.FromRgb(196, 54, 43); border = Color.FromRgb(205, 205, 205);
+                background = System.Windows.Media.Color.FromRgb(247, 247, 247); panel = System.Windows.Media.Color.FromRgb(234, 234, 234);
+                foreground = System.Windows.Media.Color.FromRgb(28, 28, 28); muted = System.Windows.Media.Color.FromRgb(100, 100, 100);
+                accent = System.Windows.Media.Color.FromRgb(196, 54, 43); border = System.Windows.Media.Color.FromRgb(205, 205, 205);
                 break;
             case "Blue":
-                background = Color.FromRgb(22, 29, 39); panel = Color.FromRgb(31, 42, 56);
-                foreground = Color.FromRgb(231, 238, 246); muted = Color.FromRgb(151, 169, 190);
-                accent = Color.FromRgb(70, 150, 220); border = Color.FromRgb(48, 65, 84);
+                background = System.Windows.Media.Color.FromRgb(22, 29, 39); panel = System.Windows.Media.Color.FromRgb(31, 42, 56);
+                foreground = System.Windows.Media.Color.FromRgb(231, 238, 246); muted = System.Windows.Media.Color.FromRgb(151, 169, 190);
+                accent = System.Windows.Media.Color.FromRgb(70, 150, 220); border = System.Windows.Media.Color.FromRgb(48, 65, 84);
                 break;
             default:
-                background = Color.FromRgb(31, 31, 31); panel = Color.FromRgb(40, 40, 40);
-                foreground = Color.FromRgb(230, 230, 230); muted = Color.FromRgb(153, 153, 153);
-                accent = Color.FromRgb(230, 72, 58); border = Color.FromRgb(58, 58, 58);
+                background = System.Windows.Media.Color.FromRgb(31, 31, 31); panel = System.Windows.Media.Color.FromRgb(40, 40, 40);
+                foreground = System.Windows.Media.Color.FromRgb(230, 230, 230); muted = System.Windows.Media.Color.FromRgb(153, 153, 153);
+                accent = System.Windows.Media.Color.FromRgb(230, 72, 58); border = System.Windows.Media.Color.FromRgb(58, 58, 58);
                 break;
         }
 
@@ -549,7 +549,7 @@ root.Children.Add(controls);
 
     private void ApplyBadge(bool bot)
     {
-        _statusBadge.Background = new SolidColorBrush(bot ? Color.FromRgb(94, 61, 61) : Color.FromRgb(47, 92, 68));
+        _statusBadge.Background = new SolidColorBrush(bot ? System.Windows.Media.Color.FromRgb(94, 61, 61) : System.Windows.Media.Color.FromRgb(47, 92, 68));
         _statusText.Foreground = System.Windows.Media.Brushes.White;
     }
 
