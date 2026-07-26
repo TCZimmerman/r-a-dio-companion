@@ -1,4 +1,4 @@
-using Microsoft.Win32;
+        using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using WinForms = System.Windows.Forms;
 using Drawing = System.Drawing;
+using LibVLCSharp.Shared;
 
 namespace RadioCompanion;
 
@@ -29,7 +30,9 @@ public sealed class MainWindow : Window
     private readonly AppSettings _settings = SettingsStore.Load();
     private readonly SseClient _sse = new(SseUrl);
     private readonly HttpClient _imageHttp = new();
-    private readonly MediaPlayer _player = new();
+    private readonly LibVLC _libVlc = new();
+    private readonly LibVLCSharp.Shared.MediaPlayer _player;
+    private Media? _currentMedia;
     private readonly DispatcherTimer _progressTimer;
 
     private readonly Border _shell = new();
@@ -86,26 +89,22 @@ public sealed class MainWindow : Window
             Top = SystemParameters.WorkArea.Top + 24;
         }
 
+        
         Content = BuildUi();
         ApplyTheme(_settings.Theme);
+
+        _player = new LibVLCSharp.Shared.MediaPlayer(_libVlc);
 
         _volume.Minimum = 0;
         _volume.Maximum = 1;
         _volume.Value = Math.Clamp(_settings.Volume, 0, 1);
-        _player.Volume = _volume.Value;
+        _player.Volume = (int)(_volume.Value * 100);
         _volume.ValueChanged += (_, _) =>
         {
-            _player.Volume = _volume.Value;
+            _player.Volume = (int)(_volume.Value * 100);
             _settings.Volume = _volume.Value;
             SaveSettings();
         };
-
-        _player.MediaFailed += (_, e) => Dispatcher.Invoke(() =>
-        {
-            StopAudio();
-            _connection.Text = "Audio failed";
-            _connection.ToolTip = e.ErrorException?.Message;
-        });
 
         _progressTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(250), DispatcherPriority.Background, (_, _) => UpdateProgress(), Dispatcher);
         _progressTimer.Start();
@@ -130,6 +129,9 @@ public sealed class MainWindow : Window
             SavePosition();
             await _sse.DisposeAsync();
             DisposeAvatar();
+            _currentMedia?.Dispose();
+            _player.Dispose();
+            _libVlc.Dispose();
             _imageHttp.Dispose();
         };
     }
@@ -430,9 +432,18 @@ public sealed class MainWindow : Window
     {
         try
         {
-            _player.Open(new Uri(StreamUrl));
-            _player.Volume = _volume.Value;
-            _player.Play();
+            _currentMedia?.Dispose();
+
+            _currentMedia = new Media(_libVlc, StreamUrl, FromType.FromLocation);
+
+            _player.Volume = (int)(_volume.Value * 100);
+            var result = _player.Play(_currentMedia);
+
+            if (!result)
+            {
+                throw new Exception("LibVLC failed to start playback.");
+            }
+
             _playing = true;
             _playButton.Content = "■ Stop";
         }
@@ -446,7 +457,7 @@ public sealed class MainWindow : Window
     private void StopAudio()
     {
         try { _player.Stop(); } catch { }
-        try { _player.Close(); } catch { }
+
         _playing = false;
         _playButton.Content = "▶ Play";
     }
