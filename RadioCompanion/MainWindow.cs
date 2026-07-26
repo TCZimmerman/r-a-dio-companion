@@ -30,7 +30,7 @@ public sealed class MainWindow : Window
     private readonly AppSettings _settings = SettingsStore.Load();
     private readonly SseClient _sse = new(SseUrl);
     private readonly HttpClient _imageHttp = new();
-    private readonly LibVLC _libVlc = new();
+    private readonly LibVLC _libVlc;
     private readonly LibVLCSharp.Shared.MediaPlayer _player;
     private Media? _currentMedia;
     private readonly DispatcherTimer _progressTimer;
@@ -93,6 +93,8 @@ public sealed class MainWindow : Window
         Content = BuildUi();
         ApplyTheme(_settings.Theme);
 
+        Core.Initialize();
+        _libVlc = new LibVLC();
         _player = new LibVLCSharp.Shared.MediaPlayer(_libVlc);
 
         _volume.Minimum = 0;
