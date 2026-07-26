@@ -550,7 +550,7 @@ root.Children.Add(controls);
     private void ApplyBadge(bool bot)
     {
         _statusBadge.Background = new SolidColorBrush(bot ? Color.FromRgb(94, 61, 61) : Color.FromRgb(47, 92, 68));
-        _statusText.Foreground = Brushes.White;
+        _statusText.Foreground = System.Windows.Media.Brushes.White;
     }
 
     private void SavePosition()
