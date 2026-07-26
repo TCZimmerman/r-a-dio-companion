@@ -36,7 +36,7 @@ affiliated with, endorsed by, or an official application of r-a-d.io.
 2.  Run `build.ps1` from PowerShell:
 
 ``` powershell
--ExecutionPolicy Bypass -File .uild.ps1
+-ExecutionPolicy Bypass -File .build.ps1
 ```
 
 The published application is self-contained and does not require the
