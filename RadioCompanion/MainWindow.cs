@@ -73,6 +73,7 @@ public sealed class MainWindow : Window
     private CancellationTokenSource? _avatarLoad;
     private bool _allowClose;
     private bool _menuButtonClosing;
+    private bool _connected;
 
     public MainWindow()
     {
@@ -150,8 +151,11 @@ public sealed class MainWindow : Window
         _progressTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(250), DispatcherPriority.Background, (_, _) => UpdateProgress(), Dispatcher);
         _progressTimer.Start();
 
+        _sse.EventReceived += OnSseEvent;
+
         _sse.ConnectionChanged += connected => Dispatcher.BeginInvoke(() =>
         {
+            _connected = connected;
             _connection.Text = connected ? "● connected" : "○ reconnecting…";
 
             _connection.Foreground = new SolidColorBrush(
@@ -217,8 +221,8 @@ public sealed class MainWindow : Window
         _djName.Text = "Connecting…";
         _statusBadge.CornerRadius = new CornerRadius(8);
         _statusBadge.Padding = new Thickness(7, 1, 7, 1);
-        _statusBadge.Margin = new Thickness(8, 0, 0, 0);
-        _statusBadge.VerticalAlignment = VerticalAlignment.Center;
+        _statusBadge.Margin = new Thickness(8, 2, 0, 0);
+        _statusBadge.VerticalAlignment = VerticalAlignment.Bottom;
         _statusText.VerticalAlignment = VerticalAlignment.Center;
         _statusBadge.Child = _statusText;
         _statusText.FontSize = 10;
@@ -760,10 +764,26 @@ private void ShowThemePopup()
     private void CopyText(string text)
     {
         System.Windows.Clipboard.SetText(text);
+
         var old = _connection.Text;
+        var oldBrush = _connection.Foreground;
+
         _connection.Text = "✓ Copied to clipboard";
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        timer.Tick += (_, _) => { timer.Stop(); _connection.Text = old; };
+        _connection.Foreground = new SolidColorBrush(
+            System.Windows.Media.Color.FromRgb(180, 180, 180));
+
+        var timer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(2)
+        };
+
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            _connection.Text = old;
+            _connection.Foreground = oldBrush;
+        };
+
         timer.Start();
     }
 
@@ -775,14 +795,24 @@ private void ShowThemePopup()
         OpenUrl("https://www.google.com/search?q=" + Uri.EscapeDataString(query));
 
         var old = _connection.Text;
-        _connection.Text = "✓ Searching Google";
+        var oldBrush = _connection.Foreground;
 
-        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _connection.Text = "Searching Google";
+        _connection.Foreground = new SolidColorBrush(
+            System.Windows.Media.Color.FromRgb(180, 180, 180));
+
+        var timer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(2)
+        };
+
         timer.Tick += (_, _) =>
         {
             timer.Stop();
             _connection.Text = old;
+            _connection.Foreground = oldBrush;
         };
+
         timer.Start();
     }
 
@@ -817,7 +847,10 @@ private void ShowThemePopup()
         Background = new SolidColorBrush(background);
         _shell.BorderBrush = new SolidColorBrush(border);
         Foreground = new SolidColorBrush(foreground);
-        _connection.Foreground = new SolidColorBrush(muted);
+        _connection.Foreground = new SolidColorBrush(
+             _connected
+        ? System.Windows.Media.Color.FromRgb(127, 191, 127)
+        : muted);
         _tags.Foreground = new SolidColorBrush(muted);
         _time.Foreground = new SolidColorBrush(muted);
 
