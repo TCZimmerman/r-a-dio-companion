@@ -90,12 +90,12 @@ public sealed class MainWindow : Window
         }
 
         
-        Content = BuildUi();
-        ApplyTheme(_settings.Theme);
-
         Core.Initialize();
         _libVlc = new LibVLC();
         _player = new LibVLCSharp.Shared.MediaPlayer(_libVlc);
+
+        Content = BuildUi();
+        ApplyTheme(_settings.Theme);
 
         _volume.Minimum = 0;
         _volume.Maximum = 1;
