@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Forms.Integration;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -52,6 +53,14 @@ public sealed class MainWindow : Window
     private readonly StackPanel _nextList = new();
     private readonly WinForms.PictureBox _avatar = new();
 
+    private readonly Popup _menuPopup = new();
+    private readonly StackPanel _menuPanel = new();
+    private readonly Border _menuBorder = new();
+
+    private readonly Popup _themePopup = new();
+    private readonly StackPanel _themePanel = new();
+    private Border? _themeMenuItem;
+
     private MetadataParser.CurrentTrack? _current;
     private MetadataParser.Streamer? _streamer;
     private IReadOnlyList<TrackItem> _queue = Array.Empty<TrackItem>();
@@ -63,6 +72,7 @@ public sealed class MainWindow : Window
     private Drawing.Image? _avatarImage;
     private CancellationTokenSource? _avatarLoad;
     private bool _allowClose;
+    private bool _menuButtonClosing;
 
     public MainWindow()
     {
@@ -95,6 +105,35 @@ public sealed class MainWindow : Window
         _player = new LibVLCSharp.Shared.MediaPlayer(_libVlc);
 
         Content = BuildUi();
+        _menuPopup.Closed += (_, _) =>
+        {
+            _menuPanel.Children.Clear();
+
+            if (_menuButtonClosing)
+            {
+                _menuButtonClosing = false;
+            }
+        };
+        PreviewMouseDown += (_, e) =>
+        {
+            if (_menuPopup.IsOpen &&
+                !_menuPopup.IsMouseOver &&
+                !_themePopup.IsMouseOver)
+            {
+                _menuPopup.IsOpen = false;
+                _themePopup.IsOpen = false;
+            }
+        };
+        _themePopup.Closed += (_, _) =>
+        {
+            _themePanel.Children.Clear();
+        };
+
+        Deactivated += (_, _) =>
+        {
+            _menuPopup.IsOpen = false;
+            _themePopup.IsOpen = false;
+        };
         ApplyTheme(_settings.Theme);
 
         _volume.Minimum = 0;
@@ -174,7 +213,9 @@ public sealed class MainWindow : Window
         _djName.Text = "Connecting…";
         _statusBadge.CornerRadius = new CornerRadius(8);
         _statusBadge.Padding = new Thickness(7, 2, 7, 2);
-        _statusBadge.Margin = new Thickness(8, 1, 0, 0);
+        _statusBadge.Margin = new Thickness(8, 0, 0, 0);
+        _statusBadge.VerticalAlignment = VerticalAlignment.Center;
+        _statusText.VerticalAlignment = VerticalAlignment.Center;
         _statusBadge.Child = _statusText;
         _statusText.FontSize = 10;
         _statusText.FontWeight = FontWeights.Bold;
@@ -188,12 +229,25 @@ public sealed class MainWindow : Window
         Grid.SetColumn(identity, 1);
         header.Children.Add(identity);
 
-        var menuButton = new System.Windows.Controls.Button { Content = "⋮", Width = 32, Height = 32, FontSize = 20, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Top };
+        var menuButton = new System.Windows.Controls.Button
+        {
+            Content = "⋮",
+            Width = 32,
+            Height = 32,
+            FontSize = 20,
+            Padding = new Thickness(0),
+            VerticalAlignment = VerticalAlignment.Top
+        };
+
         menuButton.Click += (_, _) =>
         {
-            menuButton.ContextMenu = BuildMenu();
-            menuButton.ContextMenu.PlacementTarget = menuButton;
-            menuButton.ContextMenu.IsOpen = true;
+            if (_menuPopup.IsOpen)
+            {
+                _menuPopup.IsOpen = false;
+                return;
+            }
+
+            ShowPopupMenu(menuButton);
         };
         Grid.SetColumn(menuButton, 2);
         header.Children.Add(menuButton);
@@ -260,7 +314,7 @@ public sealed class MainWindow : Window
         var controls = new Grid { Margin = new Thickness(0, 12, 0, 0) };
         controls.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(120) });
         controls.ColumnDefinitions.Add(new ColumnDefinition());
-        _playButton.Content = "▶ Play";
+        _playButton.Content = "▶  Play";
         _playButton.Height = 36;
         _playButton.Click += (_, _) => ToggleAudio();
         controls.Children.Add(_playButton);
@@ -302,52 +356,212 @@ public sealed class MainWindow : Window
         };
     }
 
-    private ContextMenu BuildMenu()
+    private void ShowPopupMenu(System.Windows.Controls.Button menuButton)
     {
-        var menu = new ContextMenu();
-        var top = new MenuItem { Header = "Always on top", IsCheckable = true, IsChecked = Topmost };
-        top.Click += (_, _) => { Topmost = top.IsChecked; _settings.AlwaysOnTop = Topmost; SaveSettings(); };
-        menu.Items.Add(top);
+        _menuPanel.Children.Clear();
+        _menuPanel.Width = 165;
 
-        var locked = new MenuItem { Header = "Lock position", IsCheckable = true, IsChecked = _settings.LockPosition };
-        locked.Click += (_, _) => { _settings.LockPosition = locked.IsChecked; SaveSettings(); };
-        menu.Items.Add(locked);
-
-        var startup = new MenuItem { Header = "Start with Windows", IsCheckable = true, IsChecked = _settings.StartWithWindows };
-        startup.Click += (_, _) =>
+        if (_menuPopup.Child == null)
         {
-            try
+            _menuBorder.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(37, 37, 37));
+            _menuBorder.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(85, 85, 85));
+            _menuBorder.BorderThickness = new Thickness(1);
+            _menuBorder.CornerRadius = new CornerRadius(8);
+            _menuBorder.Padding = new Thickness(6);
+            _menuBorder.Child = _menuPanel;
+
+            _menuPopup.Child = _menuBorder;
+        }
+        _menuPopup.AllowsTransparency = true;
+        _menuPopup.Placement = PlacementMode.Bottom;
+        _menuPopup.HorizontalOffset = -150;
+        _menuPopup.VerticalOffset = 4;
+        _menuPopup.StaysOpen = true;
+
+        AddPopupMenuItem(
+        "Always on top",
+        Topmost,
+        () =>
+        {
+            Topmost = !Topmost;
+            _settings.AlwaysOnTop = Topmost;
+            SaveSettings();
+        });
+
+        AddPopupMenuItem(
+            "Lock position",
+            _settings.LockPosition,
+            () =>
             {
-                SetStartWithWindows(startup.IsChecked);
-                _settings.StartWithWindows = startup.IsChecked;
+                _settings.LockPosition = !_settings.LockPosition;
                 SaveSettings();
-            }
-            catch (Exception ex)
+            });
+
+        AddPopupMenuItem(
+            "Start with Windows",
+            _settings.StartWithWindows,
+            () =>
             {
-                startup.IsChecked = !startup.IsChecked;
-                System.Windows.MessageBox.Show(this, ex.Message, "Could not change startup setting", MessageBoxButton.OK, MessageBoxImage.Warning);
+                try
+                {
+                    _settings.StartWithWindows = !_settings.StartWithWindows;
+                    SetStartWithWindows(_settings.StartWithWindows);
+                    SaveSettings();
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(
+                        this,
+                        ex.Message,
+                        "Could not change startup setting",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
+            });
+
+        _themeMenuItem = AddPopupMenuItem(
+            "Theme                 >",
+            false,
+            () => ShowThemePopup());
+
+        _menuPanel.Children.Add(new Border
+        {
+            Height = 1,
+            Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(85, 85, 85)),
+            Margin = new Thickness(0, 5, 0, 5)
+        });
+
+        AddPopupMenuItem(
+            "Open r/a/dio",
+            false,
+            () => OpenUrl("https://r-a-d.io/"));
+
+        AddPopupMenuItem(
+            "Exit",
+            false,
+            () =>
+            {
+                _allowClose = true;
+                Close();
+            });
+
+        _menuPopup.PlacementTarget = menuButton;
+        _menuPopup.IsOpen = true;
+    }
+
+private void ShowThemePopup()
+    {
+        _themePanel.Children.Clear();
+
+        if (_themePopup.Child == null)
+        {
+            var border = new Border
+            {
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(37, 37, 37)),
+                BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(85, 85, 85)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(6),
+                Child = _themePanel
+            };
+
+            _themePopup.Child = border;
+            _themePopup.AllowsTransparency = true;
+            _themePopup.StaysOpen = true;
+        }
+
+        AddThemeItem("Classic");
+        AddThemeItem("Blue");
+        AddThemeItem("Light");
+
+        _themePopup.PlacementTarget = _themeMenuItem;
+        _themePopup.Placement = PlacementMode.Right;
+        _themePopup.HorizontalOffset = 2;
+        _themePopup.VerticalOffset = 0;
+        _themePopup.IsOpen = true;
+    }
+
+
+    private void AddThemeItem(string theme)
+    {
+        var selected = theme == _settings.Theme;
+
+        var item = new TextBlock
+        {
+            Text = selected ? $"✓  {theme}" : $"    {theme}",
+            Foreground = System.Windows.Media.Brushes.White,
+            FontSize = 13,
+            Margin = new Thickness(6, 3, 6, 3)
+        };
+
+        var border = new Border
+        {
+            CornerRadius = new CornerRadius(4),
+            Child = item
+        };
+
+        border.MouseEnter += (_, _) =>
+        {
+            border.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(58, 58, 58));
+        };
+
+        border.MouseLeave += (_, _) =>
+        {
+            border.Background = null;
+        };
+
+        border.MouseLeftButtonUp += (_, _) =>
+        {
+            _settings.Theme = theme;
+            ApplyTheme(theme);
+            SaveSettings();
+
+            _themePopup.IsOpen = false;
+            _menuPopup.IsOpen = false;
+        };
+
+        _themePanel.Children.Add(border);
+    }
+
+    private Border AddPopupMenuItem(string text, bool checkedState, Action action)
+    {
+        var item = new TextBlock
+        {
+            Text = checkedState ? $"✓  {text}" : $"     {text}",
+            Foreground = System.Windows.Media.Brushes.White,
+            FontSize = 13,
+            Margin = new Thickness(6, 3, 6, 3)
+        };
+
+        var border = new Border
+        {
+            CornerRadius = new CornerRadius(4),
+            Child = item
+        };
+
+        border.MouseEnter += (_, _) =>
+        {
+            border.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(58, 58, 58));
+        };
+
+        border.MouseLeave += (_, _) =>
+        {
+            border.Background = null;
+        };
+
+        border.MouseLeftButtonUp += (_, _) =>
+        {
+            action();
+
+            if (!text.StartsWith("Theme"))
+            {
+                _menuPopup.IsOpen = false;
             }
         };
-        menu.Items.Add(startup);
 
-        var theme = new MenuItem { Header = "Theme" };
-        foreach (var name in new[] { "Classic", "Blue", "Light" })
-        {
-            var item = new MenuItem { Header = name, IsCheckable = true, IsChecked = _settings.Theme == name };
-            item.Click += (_, _) => { _settings.Theme = name; ApplyTheme(name); SaveSettings(); };
-            theme.Items.Add(item);
-        }
-        menu.Items.Add(theme);
+        _menuPanel.Children.Add(border);
 
-        menu.Items.Add(new Separator());
-        var openSite = new MenuItem { Header = "Open r/a/dio" };
-        openSite.Click += (_, _) => OpenUrl("https://r-a-d.io/");
-        menu.Items.Add(openSite);
-
-        var exit = new MenuItem { Header = "Exit" };
-        exit.Click += (_, _) => { _allowClose = true; Close(); };
-        menu.Items.Add(exit);
-        return menu;
+        return border;
     }
 
     private void OnSseEvent(string type, string data)
@@ -481,7 +695,7 @@ public sealed class MainWindow : Window
             }
 
             _playing = true;
-            _playButton.Content = "■ Stop";
+            _playButton.Content = "■  Stop";
         }
         catch (Exception ex)
         {
