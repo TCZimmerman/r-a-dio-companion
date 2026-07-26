@@ -1,10 +1,10 @@
 # R/a/dio Companion v1
 
 A small native Windows desktop companion app for
-[r/a/d.io](https://r-a-d.io/).
+[r/a/dio](https://r-a-d.io/).
 
 R/a/dio Companion is an unofficial third-party client and is not
-affiliated with or endorsed by r-a-d.io.
+affiliated with, endorsed by, or an official application of r-a-d.io.
 
 ## Features
 
@@ -36,7 +36,7 @@ affiliated with or endorsed by r-a-d.io.
 2.  Run `build.ps1` from PowerShell:
 
 ``` powershell
--ExecutionPolicy Bypass -File .\build.ps1
+-ExecutionPolicy Bypass -File .uild.ps1
 ```
 
 The published application is self-contained and does not require the
@@ -49,7 +49,8 @@ The published application is self-contained and does not require the
     Windows, themes and Exit.
 -   Playback starts stopped when the app launches.
 -   Album artwork is not included in v1.
--   The app uses LibVLCSharp for reliable internet radio playback.
+-   Audio playback is provided by LibVLCSharp and the bundled VLC
+    runtime.
 
 ## Settings
 
@@ -70,4 +71,14 @@ install the SDK locally.
 
 ## Licence and notices
 
-See: - `LICENSE` - `NOTICE.md`
+R/a/dio Companion is open source software. You are free to use, modify,
+adapt, and redistribute the source code according to the terms of the
+licence included with this repository.
+
+Third-party components and external content are covered by their own
+licences and terms.
+
+See:
+
+-   `LICENSE`
+-   `NOTICE.md`
