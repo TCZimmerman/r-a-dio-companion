@@ -70,7 +70,7 @@ public sealed class MainWindow : Window
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
         ShowInTaskbar = false;
-        Background = Brushes.Transparent;
+        Background = System.Windows.Media.Brushes.Transparent;
         AllowsTransparency = false;
         Topmost = _settings.AlwaysOnTop;
         WindowStartupLocation = WindowStartupLocation.Manual;
@@ -160,7 +160,7 @@ public sealed class MainWindow : Window
         header.Children.Add(avatarHost);
 
         var identity = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        var djLine = new StackPanel { Orientation = Orientation.Horizontal };
+        var djLine = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
         _djName.FontSize = 17;
         _djName.FontWeight = FontWeights.SemiBold;
         _djName.Text = "Connecting…";
@@ -195,7 +195,7 @@ public sealed class MainWindow : Window
         _track.FontWeight = FontWeights.SemiBold;
         _track.TextAlignment = TextAlignment.Center;
         _track.TextWrapping = TextWrapping.Wrap;
-        _track.Cursor = Cursors.Hand;
+        _track.Cursor = System.Windows.Input.Cursors.Hand;
         _track.ToolTip = "Click to copy artist and title";
         _track.MouseLeftButtonUp += (_, _) => CopyCurrent();
         root.Children.Add(_track);
@@ -205,7 +205,7 @@ public sealed class MainWindow : Window
         _tags.TextWrapping = TextWrapping.Wrap;
         _tags.MaxHeight = 38;
         _tags.Margin = new Thickness(8, 4, 8, 11);
-        _tags.Cursor = Cursors.Hand;
+        _tags.Cursor = System.Windows.Input.Cursors.Hand;
         _tags.ToolTip = "Click to search Source / tags on Google";
         _tags.MouseLeftButtonUp += (_, _) => SearchTags();
         root.Children.Add(_tags);
@@ -213,7 +213,7 @@ public sealed class MainWindow : Window
         _progress.Height = 8;
         _progress.Minimum = 0;
         _progress.Maximum = 1;
-        _progress.Cursor = Cursors.Hand;
+        _progress.Cursor = System.Windows.Input.Cursors.Hand;
         _progress.ToolTip = "Click to copy artist and title";
         _progress.MouseLeftButtonUp += (_, _) => CopyCurrent();
         root.Children.Add(_progress);
@@ -238,7 +238,7 @@ public sealed class MainWindow : Window
         _playButton.Click += (_, _) => ToggleAudio();
         controls.Children.Add(_playButton);
 
-        var volumePanel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(14, 0, 0, 0) };
+        Orientation = System.Windows.Controls.Orientation.Horizontal
         volumePanel.Children.Add(new TextBlock { Text = "🔊", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) });
         _volume.VerticalAlignment = VerticalAlignment.Center;
         _volume.Width = 225;
@@ -280,7 +280,7 @@ public sealed class MainWindow : Window
             catch (Exception ex)
             {
                 startup.IsChecked = !startup.IsChecked;
-                MessageBox.Show(this, ex.Message, "Could not change startup setting", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show(this, ex.Message, "Could not change startup setting", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         };
         menu.Items.Add(startup);
@@ -378,7 +378,7 @@ public sealed class MainWindow : Window
                 Text = $"{i + 1}.  {item.Title}{(item.IsRequest ? "   REQUEST" : string.Empty)}",
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Margin = new Thickness(17, 4, 4, 4),
-                Cursor = Cursors.Hand,
+                Cursor = System.Windows.Input.Cursors.Hand,
                 ToolTip = item.Title
             };
             row.MouseLeftButtonUp += (_, _) => CopyText(item.Title);
@@ -426,7 +426,7 @@ public sealed class MainWindow : Window
         catch (Exception ex)
         {
             StopAudio();
-            MessageBox.Show(this, ex.Message, "Could not start stream", MessageBoxButton.OK, MessageBoxImage.Warning);
+            System.Windows.MessageBox.Show(this, ex.Message, "Could not start stream", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -563,7 +563,7 @@ public sealed class MainWindow : Window
         }
 
         var processPath = Environment.ProcessPath ?? throw new InvalidOperationException("The application path could not be determined.");
-        var entry = System.Reflection.Assembly.GetEntryAssembly()?.Location;
+        var entry = System.AppContext.BaseDirectory;
         var command = Path.GetFileNameWithoutExtension(processPath).Equals("dotnet", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(entry)
             ? $"\"{processPath}\" \"{entry}\""
             : $"\"{processPath}\"";
