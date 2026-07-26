@@ -38,7 +38,7 @@ public sealed class MainWindow : Window
     private readonly TextBlock _statusText = new();
     private readonly TextBlock _track = new();
     private readonly TextBlock _tags = new();
-    private readonly ProgressBar _progress = new();
+    private readonly System.Windows.Controls.ProgressBar _progress = new();
     private readonly TextBlock _time = new();
     private readonly TextBlock _connection = new();
     private readonly Button _playButton = new();
@@ -180,7 +180,7 @@ public sealed class MainWindow : Window
         Grid.SetColumn(identity, 1);
         header.Children.Add(identity);
 
-        var menuButton = new Button { Content = "⋮", Width = 32, Height = 32, FontSize = 20, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Top };
+        var menuButton = new System.Windows.Controls.Button { Content = "⋮", Width = 32, Height = 32, FontSize = 20, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Top };
         menuButton.Click += (_, _) =>
         {
             menuButton.ContextMenu = BuildMenu();
