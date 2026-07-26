@@ -41,7 +41,7 @@ public sealed class MainWindow : Window
     private readonly System.Windows.Controls.ProgressBar _progress = new();
     private readonly TextBlock _time = new();
     private readonly TextBlock _connection = new();
-    private readonly Button _playButton = new();
+    private readonly System.Windows.Controls.Button _playButton = new();
     private readonly Slider _volume = new();
     private readonly Expander _lastExpander = new();
     private readonly Expander _nextExpander = new();
