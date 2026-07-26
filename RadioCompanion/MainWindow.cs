@@ -150,10 +150,14 @@ public sealed class MainWindow : Window
         _progressTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(250), DispatcherPriority.Background, (_, _) => UpdateProgress(), Dispatcher);
         _progressTimer.Start();
 
-        _sse.EventReceived += OnSseEvent;
         _sse.ConnectionChanged += connected => Dispatcher.BeginInvoke(() =>
         {
             _connection.Text = connected ? "● connected" : "○ reconnecting…";
+
+            _connection.Foreground = new SolidColorBrush(
+                connected
+                    ? System.Windows.Media.Color.FromRgb(127, 191, 127)
+                    : System.Windows.Media.Color.FromRgb(180, 150, 90));
         });
 
         Loaded += (_, _) => _sse.Start();
@@ -212,7 +216,7 @@ public sealed class MainWindow : Window
         _djName.FontWeight = FontWeights.SemiBold;
         _djName.Text = "Connecting…";
         _statusBadge.CornerRadius = new CornerRadius(8);
-        _statusBadge.Padding = new Thickness(7, 2, 7, 2);
+        _statusBadge.Padding = new Thickness(7, 1, 7, 1);
         _statusBadge.Margin = new Thickness(8, 0, 0, 0);
         _statusBadge.VerticalAlignment = VerticalAlignment.Center;
         _statusText.VerticalAlignment = VerticalAlignment.Center;

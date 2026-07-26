@@ -7,8 +7,8 @@
         <!-- Main buttons -->
         <Style TargetType="{x:Type Button}">
             <Setter Property="Foreground" Value="#E6E6E6"/>
-            <Setter Property="Background" Value="#2A2A2A"/>
-            <Setter Property="BorderBrush" Value="#555555"/>
+            <Setter Property="Background" Value="#252525"/>
+            <Setter Property="BorderBrush" Value="#444444"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Height" Value="36"/>
