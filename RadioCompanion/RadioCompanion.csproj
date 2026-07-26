@@ -1,4 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
@@ -11,4 +12,10 @@
     <RootNamespace>RadioCompanion</RootNamespace>
     <ApplicationIcon>radio.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LibVLCSharp" Version="3.*" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.*" />
+  </ItemGroup>
+
 </Project>
