@@ -238,27 +238,27 @@ public sealed class MainWindow : Window
         _playButton.Click += (_, _) => ToggleAudio();
         controls.Children.Add(_playButton);
 
-var volumePanel = new StackPanel
-{
-    Orientation = System.Windows.Controls.Orientation.Horizontal,
-    VerticalAlignment = VerticalAlignment.Center,
-    Margin = new Thickness(14, 0, 0, 0)
-};
+        var volumePanel = new StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(14, 0, 0, 0)
+        };
 
-volumePanel.Children.Add(new TextBlock
-{
-    Text = "🔊",
-    VerticalAlignment = VerticalAlignment.Center,
-    Margin = new Thickness(0, 0, 8, 0)
-});
+        volumePanel.Children.Add(new TextBlock
+        {
+            Text = "🔊",
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 8, 0)
+        });
 
-_volume.VerticalAlignment = VerticalAlignment.Center;
-_volume.Width = 225;
-volumePanel.Children.Add(_volume);
+        _volume.VerticalAlignment = VerticalAlignment.Center;
+        _volume.Width = 225;
+        volumePanel.Children.Add(_volume);
 
-Grid.SetColumn(volumePanel, 1);
-controls.Children.Add(volumePanel);
-root.Children.Add(controls);
+        Grid.SetColumn(volumePanel, 1);
+        controls.Children.Add(volumePanel);
+        root.Children.Add(controls);
 
         return _shell;
     }
