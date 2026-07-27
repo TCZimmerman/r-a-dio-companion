@@ -12,7 +12,10 @@ affiliated with, endorsed by, or an official application of r-a-d.io.
 
 Pre-built Windows releases are available from the GitHub Releases page.
 
-Requirements: - Windows 10/11 (x64) - .NET 8 Desktop Runtime
+Requirements:
+
+- Windows 10/11 (x64)
+- .NET 8 Desktop Runtime
 
 The release package includes the required VLC runtime. No separate VLC
 installation is required.
