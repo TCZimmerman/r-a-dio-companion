@@ -3,6 +3,8 @@
 A small native Windows desktop companion app for
 [r/a/dio](https://r-a-d.io/).
 
+![R/a/dio Companion screenshot](docs/screenshot.png)
+
 R/a/dio Companion is an unofficial third-party client and is not
 affiliated with, endorsed by, or an official application of r-a-d.io.
 
