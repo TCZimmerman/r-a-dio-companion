@@ -47,6 +47,9 @@ public sealed class MainWindow : Window
     private readonly TextBlock _connection = new();
     private readonly System.Windows.Controls.Button _playButton = new();
     private readonly Slider _volume = new();
+    private readonly TextBlock _volumeIcon = new();
+    private double _previousVolume = 1.0;
+    private bool _muted;
     private readonly Expander _lastExpander = new();
     private readonly Expander _nextExpander = new();
     private readonly StackPanel _lastList = new();
@@ -140,10 +143,42 @@ public sealed class MainWindow : Window
         _volume.Minimum = 0;
         _volume.Maximum = 1;
         _volume.Value = Math.Clamp(_settings.Volume, 0, 1);
+        _volume.PreviewMouseLeftButtonDown += (_, e) =>
+        {
+            if (e.OriginalSource is DependencyObject source &&
+                FindVisualParent<Thumb>(source) is not null)
+            {
+                return;
+            }
+
+            if (_volume.ActualWidth <= 0)
+            {
+                return;
+            }
+
+            var position = e.GetPosition(_volume);
+            var ratio = position.X / _volume.ActualWidth;
+
+            _volume.Value =
+                _volume.Minimum +
+                (Math.Clamp(ratio, 0, 1) * (_volume.Maximum - _volume.Minimum));
+
+            e.Handled = true;
+        };
         _player.Volume = (int)(_volume.Value * 100);
         _volume.ValueChanged += (_, _) =>
         {
+            if (_muted)
+            {
+                _muted = false;
+                _volumeIcon.Text = "🔊";
+                _volumeIcon.ToolTip = "Mute";
+            }
+
+            _previousVolume = _volume.Value;
+
             _player.Volume = (int)(_volume.Value * 100);
+
             _settings.Volume = _volume.Value;
             SaveSettings();
         };
@@ -334,15 +369,41 @@ public sealed class MainWindow : Window
             Margin = new Thickness(14, 0, 0, 0)
         };
 
-        volumePanel.Children.Add(new TextBlock
+        _volumeIcon.Text = "🔊";
+        _volumeIcon.VerticalAlignment = VerticalAlignment.Center;
+        _volumeIcon.Margin = new Thickness(0, 0, 8, 0);
+        _volumeIcon.Cursor = System.Windows.Input.Cursors.Hand;
+        _volumeIcon.ToolTip = "Mute";
+
+        _volumeIcon.MouseLeftButtonUp += (_, _) =>
         {
-            Text = "🔊",
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 8, 0)
-        });
+            if (_muted)
+            {
+                _muted = false;
+
+                _volumeIcon.Text = "🔊";
+                _volumeIcon.ToolTip = "Mute";
+
+                _player.Volume = (int)(_volume.Value * 100);
+            }
+            else
+            {
+                _muted = true;
+
+                _previousVolume = _volume.Value;
+
+                _volumeIcon.Text = "🔇";
+                _volumeIcon.ToolTip = "Unmute";
+
+                _player.Volume = 0;
+            }
+        };
+
+        volumePanel.Children.Add(_volumeIcon);
 
         _volume.VerticalAlignment = VerticalAlignment.Center;
         _volume.Width = 225;
+        _volume.Style = (Style)FindResource("VolumeSliderStyle");
         volumePanel.Children.Add(_volume);
 
         Grid.SetColumn(volumePanel, 1);
@@ -895,6 +956,24 @@ private void ShowThemePopup()
             ? $"\"{processPath}\" \"{entry}\""
             : $"\"{processPath}\"";
         key.SetValue(valueName, command);
+    }
+
+    private static T? FindVisualParent<T>(DependencyObject child)
+    where T : DependencyObject
+    {
+        var current = child;
+
+        while (current is not null)
+        {
+            if (current is T match)
+            {
+                return match;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
