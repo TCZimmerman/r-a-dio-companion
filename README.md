@@ -6,6 +6,17 @@ A small native Windows desktop companion app for
 R/a/dio Companion is an unofficial third-party client and is not
 affiliated with, endorsed by, or an official application of r-a-d.io.
 
+## Download
+
+Pre-built Windows releases are available from the GitHub Releases page.
+
+Requirements: - Windows 10/11 (x64) - .NET 8 Desktop Runtime
+
+The release package includes the required VLC runtime. No separate VLC
+installation is required.
+
+Extract the archive and run `RadioCompanion.exe`.
+
 ## Features
 
 -   Live playback from `https://relay1.r-a-d.io/main.mp3`
@@ -22,7 +33,7 @@ affiliated with, endorsed by, or an official application of r-a-d.io.
 -   Previous and next tracks in the compact view
 -   Expanded history and queue views (up to five entries each)
 -   Click any history or queue item to copy it
--   App-level volume control
+-   App-level volume control with persistent volume and mute settings
 -   Global Play/Pause and Stop media keys where supported by Windows
 -   Remembers window position, volume, theme, always-on-top and
     lock-position settings
@@ -36,19 +47,19 @@ affiliated with, endorsed by, or an official application of r-a-d.io.
 2.  Run `build.ps1` from PowerShell:
 
 ``` powershell
--ExecutionPolicy Bypass -File .build.ps1
+.\build.ps1
 ```
 
-The published application is self-contained and does not require the
-.NET runtime or VLC to be installed separately.
+The published application requires the .NET 8 Desktop Runtime. VLC is
+bundled with the application and does not need to be installed
+separately.
 
 ## Usage notes
 
 -   Drag any empty area of the window to move it.
--   The `⋮` menu contains Always on top, Lock position, Start with
-    Windows, themes and Exit.
+-   The `⋮` menu contains window controls, startup options, themes and
+    Exit.
 -   Playback starts stopped when the app launches.
--   Album artwork is not included in v1.
 -   Audio playback is provided by LibVLCSharp and the bundled VLC
     runtime.
 

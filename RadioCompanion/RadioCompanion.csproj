@@ -13,9 +13,21 @@
     <ApplicationIcon>radio.ico</ApplicationIcon>
   </PropertyGroup>
 
+<PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+</PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="LibVLCSharp" Version="3.*" />
     <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.*" />
   </ItemGroup>
+  
+  <Target Name="TrimLibVlcArchitectures" AfterTargets="Publish">
+	<RemoveDir Directories="$(PublishDir)libvlc\win-arm64" />
+	<RemoveDir Directories="$(PublishDir)libvlc\win-x86" />
+  </Target>
 
 </Project>
