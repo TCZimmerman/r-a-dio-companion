@@ -255,13 +255,20 @@ public sealed class MainWindow : Window
         _djName.FontWeight = FontWeights.SemiBold;
         _djName.Text = "Connecting…";
         _statusBadge.CornerRadius = new CornerRadius(8);
-        _statusBadge.Padding = new Thickness(7, 1, 7, 1);
-        _statusBadge.Margin = new Thickness(8, 2, 0, 0);
-        _statusBadge.VerticalAlignment = VerticalAlignment.Bottom;
+        _statusBadge.Padding = new Thickness(7, 0, 7, 0);
+        _statusBadge.Margin = new Thickness(8, 3, 0, 0);
+        _statusBadge.VerticalAlignment = VerticalAlignment.Center;
+        _statusBadge.Height = 16;
+        _statusBadge.RenderTransform = new TranslateTransform(0, 2);
+
         _statusText.VerticalAlignment = VerticalAlignment.Center;
-        _statusBadge.Child = _statusText;
+        _statusText.Margin = new Thickness(0, -1, 0, 0);
         _statusText.FontSize = 10;
         _statusText.FontWeight = FontWeights.Bold;
+        _statusText.LineHeight = 10;
+        _statusText.RenderTransform = new TranslateTransform(0, -0.25);
+
+        _statusBadge.Child = _statusText;
         djLine.Children.Add(_djName);
         djLine.Children.Add(_statusBadge);
         identity.Children.Add(djLine);
