@@ -35,6 +35,9 @@ public sealed class MainWindow : Window
     private readonly LibVLCSharp.Shared.MediaPlayer _player;
     private Media? _currentMedia;
     private readonly DispatcherTimer _progressTimer;
+    private readonly DispatcherTimer _sseWatchdog;
+    private long _lastSseEventUnixMs =
+        DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
     private readonly Border _shell = new();
     private readonly TextBlock _djName = new();
@@ -183,23 +186,49 @@ public sealed class MainWindow : Window
             SaveSettings();
         };
 
-        _progressTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(250), DispatcherPriority.Background, (_, _) => UpdateProgress(), Dispatcher);
+        _progressTimer = new DispatcherTimer(
+            TimeSpan.FromMilliseconds(250),
+            DispatcherPriority.Background,
+            (_, _) => UpdateProgress(),
+            Dispatcher);
+
         _progressTimer.Start();
+
+        _sseWatchdog = new DispatcherTimer(
+            TimeSpan.FromSeconds(30),
+            DispatcherPriority.Background,
+            (_, _) => CheckSseHealth(),
+            Dispatcher);
+
+        _sseWatchdog.Start();
 
         _sse.EventReceived += OnSseEvent;
 
-        _sse.ConnectionChanged += connected => Dispatcher.BeginInvoke(() =>
+        _sse.ConnectionChanged += connected =>
         {
-            _connected = connected;
-            _connection.Text = connected ? "● connected" : "○ reconnecting…";
+            if (connected)
+            {
+                Interlocked.Exchange(
+                    ref _lastSseEventUnixMs,
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            }
 
-            _connection.Foreground = new SolidColorBrush(
-                connected
-                    ? System.Windows.Media.Color.FromRgb(127, 191, 127)
-                    : System.Windows.Media.Color.FromRgb(180, 150, 90));
-        });
+            Dispatcher.BeginInvoke(() =>
+            {
+                _connected = connected;
+                _connection.Text = connected
+                    ? "● connected"
+                    : "○ reconnecting…";
+
+                _connection.Foreground = new SolidColorBrush(
+                    connected
+                        ? System.Windows.Media.Color.FromRgb(127, 191, 127)
+                        : System.Windows.Media.Color.FromRgb(180, 150, 90));
+            });
+        };
 
         Loaded += (_, _) => _sse.Start();
+        SystemEvents.PowerModeChanged += OnPowerModeChanged;
         SourceInitialized += OnSourceInitialized;
         LocationChanged += (_, _) => SavePosition();
         Closing += async (_, e) =>
@@ -209,6 +238,10 @@ public sealed class MainWindow : Window
                 e.Cancel = true;
                 return;
             }
+            _progressTimer.Stop();
+            _sseWatchdog.Stop();
+            SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+
             StopAudio();
             SavePosition();
             await _sse.DisposeAsync();
@@ -640,8 +673,59 @@ private void ShowThemePopup()
         return border;
     }
 
+    private void CheckSseHealth()
+    {
+        var lastEventMs = Interlocked.Read(ref _lastSseEventUnixMs);
+        var nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var silence = TimeSpan.FromMilliseconds(nowMs - lastEventMs);
+
+        if (silence < TimeSpan.FromSeconds(90))
+        {
+            return;
+        }
+
+        // Reset the timestamp now so the watchdog does not repeatedly
+        // request restarts while the fresh connection is being established.
+        Interlocked.Exchange(ref _lastSseEventUnixMs, nowMs);
+
+        _connected = false;
+        _connection.Text = "○ refreshing data…";
+        _connection.Foreground = new SolidColorBrush(
+            System.Windows.Media.Color.FromRgb(180, 150, 90));
+
+        _sse.Restart();
+    }
+
+    private void OnPowerModeChanged(
+    object sender,
+    PowerModeChangedEventArgs e)
+    {
+        if (e.Mode != PowerModes.Resume)
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            Interlocked.Exchange(
+                ref _lastSseEventUnixMs,
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+
+            _connected = false;
+            _connection.Text = "○ refreshing after resume…";
+            _connection.Foreground = new SolidColorBrush(
+                System.Windows.Media.Color.FromRgb(180, 150, 90));
+
+            _sse.Restart();
+        });
+    }
+
     private void OnSseEvent(string type, string data)
     {
+        Interlocked.Exchange(
+            ref _lastSseEventUnixMs,
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+
         Dispatcher.BeginInvoke(() =>
         {
             switch (type.ToLowerInvariant())
