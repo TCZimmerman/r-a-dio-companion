@@ -17,8 +17,7 @@ Requirements:
 - Windows 10/11 (x64)
 - .NET 8 Desktop Runtime
 
-The release package includes the required VLC runtime. No separate VLC
-installation is required.
+The release package includes the required VLC runtime. No separate VLC installation is required.
 
 Extract the archive and run `RadioCompanion.exe`.
 
@@ -27,15 +26,13 @@ Extract the archive and run `RadioCompanion.exe`.
 -   Live playback from `https://relay1.r-a-d.io/main.mp3`
 -   Connects to the audio stream only while playing; stopping playback
     closes the connection
--   Lightweight live metadata updates via the station SSE endpoint
+-   Lightweight live metadata updates via the station SSE endpoint, including when playback is stopped
 -   Displays current artist/title, source/tags, DJ name and avatar
--   Handles animated GIF avatars even when the server reports them as
-    `.png`
 -   `LIVE` indicator for human DJs and `BOT` indicator for Hanyuu-sama
--   Non-seekable progress bar based on station timestamps
+-   Progress bar based on station timestamps
 -   Click the progress bar or current track title to copy the song name
 -   Click source/tags to search the first tag on Google
--   Previous and next tracks in the compact view
+-   Previous and next tracks shown in the compact view
 -   Expanded history and queue views (up to five entries each)
 -   Click any history or queue item to copy it
 -   App-level volume control with persistent volume and mute settings
@@ -61,13 +58,14 @@ separately.
 
 ## Usage notes
 
--   Drag any empty area of the window to move it.
+-   Drag near any edge of the window to move it.
 -   The `⋮` menu contains window controls, startup options, themes and
     Exit.
 -   Playback starts stopped when the app launches.
 -   Audio playback is provided by LibVLCSharp and the bundled VLC
     runtime.
-
+-   It can take a few moments for the widget to appear on first run. On subsequent runs, the widget should appear quickly after running. 
+    
 ## Settings
 
 Settings are stored at:
