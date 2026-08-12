@@ -26,8 +26,17 @@ public static partial class MetadataParser
     public static Streamer? ParseStreamer(string html)
     {
         var name = InnerTextById(html, "dj-name");
-        var image = Regex.Match(html, "<img[^>]*src=[\\\"'](?<v>[^\\\"']+)", RegexOptions.IgnoreCase).Groups["v"].Value;
-        return string.IsNullOrWhiteSpace(name) ? null : new Streamer(name, WebUtility.HtmlDecode(image));
+
+        var imageMatch = Regex.Match(
+            html,
+            "<div[^>]*id=[\\\"']page-home-dj-image[\\\"'][^>]*>.*?<img[^>]*src=[\\\"'](?<v>[^\\\"']+)",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        var image = imageMatch.Groups["v"].Value;
+
+        return string.IsNullOrWhiteSpace(name)
+            ? null
+            : new Streamer(name, WebUtility.HtmlDecode(image));
     }
 
     public static IReadOnlyList<TrackItem> ParseQueue(string html)
