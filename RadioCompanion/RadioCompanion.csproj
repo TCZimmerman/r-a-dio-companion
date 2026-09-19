@@ -11,23 +11,35 @@
     <AssemblyName>RadioCompanion</AssemblyName>
     <RootNamespace>RadioCompanion</RootNamespace>
     <ApplicationIcon>radio.ico</ApplicationIcon>
+    <!-- Keep Debug and Release restores compatible with the same lock file. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode>true</RestoreLockedMode>
   </PropertyGroup>
 
-<PropertyGroup Condition="'$(Configuration)'=='Release'">
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
+    <PublishSingleFile>false</PublishSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishReadyToRun>false</PublishReadyToRun>
     <DebugType>None</DebugType>
     <DebugSymbols>false</DebugSymbols>
-</PropertyGroup>
+  </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibVLCSharp" Version="3.*" />
-    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.*" />
+    <PackageReference Include="LibVLCSharp" Version="3.10.1" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.23.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE" Link="LICENSE" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\NOTICE.md" Link="NOTICE.md" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   
   <Target Name="TrimLibVlcArchitectures" AfterTargets="Publish">
-	<RemoveDir Directories="$(PublishDir)libvlc\win-arm64" />
-	<RemoveDir Directories="$(PublishDir)libvlc\win-x86" />
+    <RemoveDir Directories="$(PublishDir)libvlc\win-arm64" />
+    <RemoveDir Directories="$(PublishDir)libvlc\win-x86" />
   </Target>
 
 </Project>

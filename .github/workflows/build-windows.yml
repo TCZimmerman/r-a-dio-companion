@@ -6,6 +6,9 @@ on:
     branches: [ main ]
     paths:
       - 'RadioCompanion/**'
+      - 'build.ps1'
+      - 'LICENSE'
+      - 'NOTICE.md'
       - '.github/workflows/build-windows.yml'
 
 permissions:
@@ -24,16 +27,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish self-contained Windows app
+      - name: Publish Windows app
         shell: pwsh
-        run: |
-          dotnet publish .\RadioCompanion\RadioCompanion.csproj `
-            --configuration Release `
-            --runtime win-x64 `
-            --self-contained true `
-            -p:PublishSingleFile=false `
-            -p:PublishTrimmed=false `
-            --output .\publish
+        run: .\build.ps1
 
       - name: Upload executable
         uses: actions/upload-artifact@v4

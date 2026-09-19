@@ -45,16 +45,26 @@ Extract the archive and run `RadioCompanion.exe`.
 
 ## Building
 
-1.  Install the Windows x64 **.NET 8 SDK**.
+1.  Install a Windows x64 **.NET SDK capable of targeting .NET 8** (.NET 8 or 9).
 2.  Run `build.ps1` from PowerShell:
 
 ``` powershell
 .\build.ps1
 ```
 
-The published application requires the .NET 8 Desktop Runtime. VLC is
-bundled with the application and does not need to be installed
-separately.
+The script publishes the project's Release configuration to `publish/`:
+framework-dependent Windows x64, with separate files and no trimming,
+ReadyToRun, or debug symbols. The application requires the .NET 8 Desktop
+Runtime. Only x64 VLC is bundled; no separate VLC installation is needed.
+`LICENSE` and `NOTICE.md` are included in the publish folder.
+
+Package versions are pinned and normal restores use `RadioCompanion/packages.lock.json`
+in locked mode. After deliberately changing a package reference, regenerate
+the lock file from the repository root, review its diff, then run `build.ps1`:
+
+``` powershell
+dotnet restore .\RadioCompanion\RadioCompanion.csproj -p:Configuration=Release -p:RestoreLockedMode=false --force-evaluate
+```
 
 ## Usage notes
 
@@ -75,7 +85,8 @@ Settings are stored at:
 ## Building via GitHub Actions
 
 The repository includes a GitHub Actions workflow if you do not want to
-install the SDK locally.
+install the SDK locally. It runs the same `build.ps1` script and uploads
+the publish folder; it does not create a GitHub release.
 
 1.  Open the repository's **Actions** tab.
 2.  Select **Build Windows app**.
