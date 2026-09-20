@@ -72,6 +72,10 @@ public sealed class MainWindow : Window
     private IReadOnlyList<TrackItem> _lastPlayed = Array.Empty<TrackItem>();
     private long _serverClockOffsetMs;
     private bool _playing;
+    private IntPtr _hotkeyHandle;
+    private bool _playPauseHotkeyRegistered;
+    private bool _stopHotkeyRegistered;
+    private bool _closingHotkeys;
     private string? _avatarUrl;
     private string? _pendingAvatarUrl;
     private MemoryStream? _avatarStream;
@@ -141,7 +145,9 @@ public sealed class MainWindow : Window
         {
             _menuPopup.IsOpen = false;
             _themePopup.IsOpen = false;
+            ReconcileMediaKeys();
         };
+        Activated += (_, _) => ReconcileMediaKeys();
         ApplyTheme(_settings.Theme);
 
         _volume.Minimum = 0;
@@ -237,6 +243,8 @@ public sealed class MainWindow : Window
                 e.Cancel = true;
                 return;
             }
+            _closingHotkeys = true;
+            ReconcileMediaKeys();
             _progressTimer.Stop();
             _sseWatchdog.Stop();
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
@@ -857,6 +865,7 @@ private void ShowThemePopup()
 
             _playing = true;
             _playButton.Content = "■  Stop";
+            ReconcileMediaKeys();
         }
         catch (Exception ex)
         {
@@ -877,6 +886,7 @@ private void ShowThemePopup()
 
         _playing = false;
         _playButton.Content = "▶ Play";
+        ReconcileMediaKeys();
     }
 
     private async Task LoadAvatarAsync(string path)
@@ -1132,24 +1142,49 @@ private void ShowThemePopup()
     private void OnSourceInitialized(object? sender, EventArgs e)
     {
         var source = (HwndSource)PresentationSource.FromVisual(this);
+        _hotkeyHandle = source.Handle;
         source.AddHook(WndProc);
-        RegisterHotKey(source.Handle, HotkeyPlayPause, 0, VkMediaPlayPause);
-        RegisterHotKey(source.Handle, HotkeyStop, 0, VkMediaStop);
-        Closed += (_, _) =>
-        {
-            UnregisterHotKey(source.Handle, HotkeyPlayPause);
-            UnregisterHotKey(source.Handle, HotkeyStop);
-        };
+        ReconcileMediaKeys();
     }
+
+    private void ReconcileMediaKeys()
+    {
+        if (_hotkeyHandle == IntPtr.Zero) return;
+
+        var shouldOwnMediaKeys = ShouldOwnMediaKeys;
+        if (shouldOwnMediaKeys)
+        {
+            if (!_playPauseHotkeyRegistered)
+                _playPauseHotkeyRegistered = RegisterHotKey(_hotkeyHandle, HotkeyPlayPause, 0, VkMediaPlayPause);
+            if (!_stopHotkeyRegistered)
+                _stopHotkeyRegistered = RegisterHotKey(_hotkeyHandle, HotkeyStop, 0, VkMediaStop);
+        }
+        else
+        {
+            if (_playPauseHotkeyRegistered && UnregisterHotKey(_hotkeyHandle, HotkeyPlayPause))
+                _playPauseHotkeyRegistered = false;
+            if (_stopHotkeyRegistered && UnregisterHotKey(_hotkeyHandle, HotkeyStop))
+                _stopHotkeyRegistered = false;
+        }
+    }
+
+    private bool ShouldOwnMediaKeys => !_closingHotkeys && (_playing || IsActive);
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         if (msg == WmHotkey)
         {
             var id = wParam.ToInt32();
-            if (id == HotkeyPlayPause) ToggleAudio();
-            else if (id == HotkeyStop) StopAudio();
-            handled = true;
+            if (id == HotkeyPlayPause)
+            {
+                handled = true;
+                if (_playPauseHotkeyRegistered && ShouldOwnMediaKeys) ToggleAudio();
+            }
+            else if (id == HotkeyStop)
+            {
+                handled = true;
+                if (_stopHotkeyRegistered && ShouldOwnMediaKeys) StopAudio();
+            }
         }
         return IntPtr.Zero;
     }
