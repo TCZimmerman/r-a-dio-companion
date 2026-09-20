@@ -32,7 +32,7 @@ public sealed class MainWindow : Window
     private readonly SseClient _sse = new(SseUrl);
     private readonly HttpClient _imageHttp = new();
     private readonly LibVLC _libVlc;
-    private readonly LibVLCSharp.Shared.MediaPlayer _player;
+    private LibVLCSharp.Shared.MediaPlayer _player;
     private Media? _currentMedia;
     private readonly DispatcherTimer _progressTimer;
     private readonly DispatcherTimer _sseWatchdog;
@@ -51,7 +51,6 @@ public sealed class MainWindow : Window
     private readonly System.Windows.Controls.Button _playButton = new();
     private readonly Slider _volume = new();
     private readonly TextBlock _volumeIcon = new();
-    private double _previousVolume = 1.0;
     private bool _muted;
     private readonly Expander _lastExpander = new();
     private readonly Expander _nextExpander = new();
@@ -168,7 +167,7 @@ public sealed class MainWindow : Window
 
             e.Handled = true;
         };
-        _player.Volume = (int)(_volume.Value * 100);
+        ApplyPlayerAudioState();
         _volume.ValueChanged += (_, _) =>
         {
             if (_muted)
@@ -178,9 +177,7 @@ public sealed class MainWindow : Window
                 _volumeIcon.ToolTip = "Mute";
             }
 
-            _previousVolume = _volume.Value;
-
-            _player.Volume = (int)(_volume.Value * 100);
+            ApplyPlayerAudioState();
 
             _settings.Volume = _volume.Value;
             SaveSettings();
@@ -424,18 +421,16 @@ public sealed class MainWindow : Window
                 _volumeIcon.Text = "🔊";
                 _volumeIcon.ToolTip = "Mute";
 
-                _player.Volume = (int)(_volume.Value * 100);
+                ApplyPlayerAudioState();
             }
             else
             {
                 _muted = true;
 
-                _previousVolume = _volume.Value;
-
                 _volumeIcon.Text = "🔇";
                 _volumeIcon.ToolTip = "Unmute";
 
-                _player.Volume = 0;
+                ApplyPlayerAudioState();
             }
         };
 
@@ -843,10 +838,12 @@ private void ShowThemePopup()
         try
         {
             _currentMedia?.Dispose();
+            _player.Dispose();
+            _player = new LibVLCSharp.Shared.MediaPlayer(_libVlc);
 
             _currentMedia = new Media(_libVlc, StreamUrl, FromType.FromLocation);
 
-            _player.Volume = (int)(_volume.Value * 100);
+            ApplyPlayerAudioState();
             var result = _player.Play(_currentMedia);
 
             if (!result)
@@ -862,6 +859,12 @@ private void ShowThemePopup()
             StopAudio();
             System.Windows.MessageBox.Show(this, ex.Message, "Could not start stream", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+    }
+
+    private void ApplyPlayerAudioState()
+    {
+        _player.Mute = _muted;
+        _player.Volume = (int)(_volume.Value * 100);
     }
 
     private void StopAudio()
