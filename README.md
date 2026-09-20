@@ -35,7 +35,8 @@ Extract the archive and run `RadioCompanion.exe`.
 -   Previous and next tracks shown in the compact view
 -   Expanded history and queue views (up to five entries each)
 -   Click any history or queue item to copy it
--   App-level volume control with persistent volume and mute settings
+-   App-level volume control; volume is saved between launches, while mute
+    lasts only until the app closes
 -   Global Play/Pause and Stop media keys where supported by Windows
 -   Remembers window position, volume, theme, always-on-top and
     lock-position settings
@@ -56,7 +57,8 @@ The script publishes the project's Release configuration to `publish/`:
 framework-dependent Windows x64, with separate files and no trimming,
 ReadyToRun, or debug symbols. The application requires the .NET 8 Desktop
 Runtime. Only x64 VLC is bundled; no separate VLC installation is needed.
-`LICENSE` and `NOTICE.md` are included in the publish folder.
+`LICENSE`, `NOTICE.md`, `THIRD-PARTY-NOTICES.md`, and the supplied third-party
+licence texts are included in the publish folder.
 
 Package versions are pinned and normal restores use `RadioCompanion/packages.lock.json`
 in locked mode. After deliberately changing a package reference, regenerate
@@ -72,6 +74,12 @@ dotnet restore .\RadioCompanion\RadioCompanion.csproj -p:Configuration=Release -
 -   The `⋮` menu contains window controls, startup options, themes and
     Exit.
 -   Playback starts stopped when the app launches.
+-   While playing, the Media Play/Pause and Media Stop keys control
+    RadioCompanion even when another app is active. When stopped, they still
+    control it while its window is active, so Play/Pause can restart the stream.
+    Once RadioCompanion is stopped and inactive, other media apps can use the
+    keys. Pressing Media Stop while RadioCompanion plays in the background
+    stops it and returns the keys to the active app.
 -   Audio playback is provided by LibVLCSharp and the bundled VLC
     runtime.
 -   It can take a few moments for the widget to appear on first run. On subsequent runs, the widget should appear quickly after running. 
@@ -107,3 +115,4 @@ See:
 
 -   `LICENSE`
 -   `NOTICE.md`
+-   `THIRD-PARTY-NOTICES.md` and the licence texts in `third-party-licenses/`
