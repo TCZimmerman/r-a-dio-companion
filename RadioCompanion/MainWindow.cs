@@ -73,9 +73,11 @@ public sealed class MainWindow : Window
     private long _serverClockOffsetMs;
     private bool _playing;
     private string? _avatarUrl;
+    private string? _pendingAvatarUrl;
     private MemoryStream? _avatarStream;
     private Drawing.Image? _avatarImage;
     private CancellationTokenSource? _avatarLoad;
+    private bool _avatarClosing;
     private bool _allowClose;
     private bool _menuButtonClosing;
     private bool _connected;
@@ -238,6 +240,8 @@ public sealed class MainWindow : Window
             _progressTimer.Stop();
             _sseWatchdog.Stop();
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+            _avatarClosing = true;
+            _avatarLoad?.Cancel();
 
             StopAudio();
             SavePosition();
@@ -877,28 +881,83 @@ private void ShowThemePopup()
 
     private async Task LoadAvatarAsync(string path)
     {
-        var absolute = new Uri(new Uri("https://r-a-d.io/"), path).ToString();
+        if (_avatarClosing) return;
+
+        if (!Uri.TryCreate(new Uri("https://r-a-d.io/"), path, out var avatarUri))
+        {
+            var pendingLoad = _avatarLoad;
+            _avatarLoad = null;
+            _pendingAvatarUrl = null;
+            pendingLoad?.Cancel();
+            return;
+        }
+
+        var absolute = avatarUri.ToString();
+        if (absolute == _pendingAvatarUrl) return;
+
+        var previousLoad = _avatarLoad;
+        _avatarLoad = null;
+        _pendingAvatarUrl = null;
+        previousLoad?.Cancel();
         if (absolute == _avatarUrl) return;
-        _avatarUrl = absolute;
-        _avatarLoad?.Cancel();
-        _avatarLoad?.Dispose();
-        _avatarLoad = new CancellationTokenSource();
+
+        var load = new CancellationTokenSource();
+        _avatarLoad = load;
+        _pendingAvatarUrl = absolute;
 
         try
         {
-            var bytes = await _imageHttp.GetByteArrayAsync(absolute, _avatarLoad.Token);
-            await Dispatcher.InvokeAsync(() =>
+            var bytes = await _imageHttp.GetByteArrayAsync(absolute, load.Token);
+            if (_avatarClosing || !ReferenceEquals(_avatarLoad, load)) return;
+
+            MemoryStream? stream = null;
+            Drawing.Image? image = null;
+            try
             {
-                DisposeAvatar();
-                _avatarStream = new MemoryStream(bytes, writable: false);
-                _avatarImage = Drawing.Image.FromStream(_avatarStream, useEmbeddedColorManagement: true, validateImageData: true);
-                _avatar.Image = _avatarImage;
-            });
+                stream = new MemoryStream(bytes, writable: false);
+                image = Drawing.Image.FromStream(stream, useEmbeddedColorManagement: true, validateImageData: true);
+
+                var previousImage = _avatarImage;
+                var previousStream = _avatarStream;
+                try
+                {
+                    _avatar.Image = image;
+                }
+                catch
+                {
+                    _avatar.Image = previousImage;
+                    throw;
+                }
+
+                _avatarImage = image;
+                _avatarStream = stream;
+                _avatarUrl = absolute;
+                image = null;
+                stream = null;
+
+                previousImage?.Dispose();
+                previousStream?.Dispose();
+            }
+            finally
+            {
+                image?.Dispose();
+                stream?.Dispose();
+            }
         }
         catch (OperationCanceledException) { }
         catch
         {
             // Keep the previous image if the new one fails.
+        }
+        finally
+        {
+            if (ReferenceEquals(_avatarLoad, load))
+            {
+                _avatarLoad = null;
+                _pendingAvatarUrl = null;
+            }
+
+            load.Dispose();
         }
     }
 
