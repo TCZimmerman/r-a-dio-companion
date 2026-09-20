@@ -17,14 +17,9 @@ This application uses third-party libraries, including:
 -   LibVLCSharp
 -   VideoLAN.LibVLC.Windows
 
-These components are licensed separately under their respective
-licences. In particular, VLC libraries are distributed under the GNU
-Lesser General Public License version 2.1 or later (LGPL-2.1-or-later).
-
-More information:
-
-- https://www.videolan.org/vlc/libvlc.html
-- https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+These components and their bundled dependencies and modules are outside
+this licence and remain governed by their respective upstream licences.
+See THIRD-PARTY-NOTICES.md for details.
 
 ## Permission
 

@@ -15,12 +15,12 @@ owners.
 
 ## Third-party software
 
-This application uses LibVLCSharp and VideoLAN.LibVLC.Windows for audio
-playback.
+This application uses LibVLCSharp 3.10.1 and VideoLAN.LibVLC.Windows
+3.0.23.1 (LibVLC 3.0.23) for audio playback. These components and their
+bundled dependencies and modules remain governed by their respective
+upstream licences; the bundled VLC payload is not uniformly LGPL.
 
-The VLC libraries are redistributed in accordance with their licensing
-requirements. VLC is licensed under the GNU Lesser General Public
-License version 2.1 or later.
+See THIRD-PARTY-NOTICES.md for licence texts and upstream information.
 
 The original R/a/dio Companion source code licence does not apply to
 third-party libraries or external content.

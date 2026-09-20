@@ -35,6 +35,9 @@
   <ItemGroup>
     <None Include="..\LICENSE" Link="LICENSE" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\NOTICE.md" Link="NOTICE.md" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\third-party-licenses\GPL-2.0.txt" Link="third-party-licenses\GPL-2.0.txt" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\third-party-licenses\LGPL-2.1.txt" Link="third-party-licenses\LGPL-2.1.txt" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   
   <Target Name="TrimLibVlcArchitectures" AfterTargets="Publish">
